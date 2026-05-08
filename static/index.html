@@ -4,103 +4,181 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Tacive WBG Intelligence</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23102623'/%3E%3Ctext x='32' y='39' font-family='Arial' font-size='18' text-anchor='middle' fill='white'%3ET%3C/text%3E%3C/svg%3E" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230B0F14'/%3E%3Cpath d='M17 18h30v7H35v22h-7V25H17z' fill='%23E9EDF1'/%3E%3C/svg%3E" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="app-header">
-      <div class="brand">
-        <span class="brand-mark">Tacive</span>
-        <div>
-          <h1>Tacive WBG Intelligence</h1>
-          <p>Commercial wide-bandgap semiconductor intelligence database</p>
-        </div>
-      </div>
-      <nav class="top-nav" aria-label="primary">
-        <a href="#overview">Overview</a>
-        <a href="#workspace">Workspace</a>
-        <a href="#quality">Quality Gate</a>
+      <a class="brand" href="#home" aria-label="Tacive home">
+        <span class="brand-mark">T</span>
+        <span>
+          <strong>Tacive</strong>
+          <small data-i18n="brandProduct">WBG Intelligence</small>
+        </span>
+      </a>
+      <nav class="top-nav" aria-label="Primary">
+        <a href="#home" data-i18n="navHome">首页</a>
+        <a href="#explorer" data-i18n="navExplorer">Explorer</a>
+        <a href="#company360" data-i18n="navCompany">公司 360</a>
+        <a href="#governance" data-i18n="navGovernance">治理</a>
       </nav>
+      <div class="header-actions">
+        <button id="localeToggle" class="ghost-button" type="button">EN</button>
+        <span id="runState" class="run-state">Loading</span>
+      </div>
     </header>
 
     <main>
-      <section class="command-strip" id="overview">
-        <div>
-          <p class="eyebrow">Tacive industry database</p>
-          <h2>Verified company, product, financial and evidence intelligence for WBG semiconductors.</h2>
+      <section id="home" class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Tacive WBG Intelligence</p>
+          <h1 data-i18n="heroTitle">我们不提供更多信息，我们提供更好的判断。</h1>
+          <p class="hero-subtitle" data-i18n="heroSubtitle">
+            Tacive 把分散的半导体产业信号，沉淀为持续更新的竞品路线图数据库，帮助战略团队更快判断竞品方向、市场窗口与路线图变化。
+          </p>
+          <div class="hero-actions">
+            <a class="primary-action" href="#explorer" data-i18n="primaryCta">Explore the database</a>
+            <a class="secondary-action" href="#governance" data-i18n="secondaryCta">See how judgments are maintained</a>
+          </div>
         </div>
-        <div class="sync-state" id="currentTask">Loading data state</div>
+        <div class="hero-panel" aria-label="Judgment object preview">
+          <div class="panel-kicker">Judgment Object</div>
+          <div class="object-preview">
+            <span>Object</span>
+            <strong id="heroObject">Infineon GaN roadmap acceleration</strong>
+          </div>
+          <div class="object-preview">
+            <span>Signal</span>
+            <p id="heroSignal">Public product and positioning signals are maintained as evidence-linked objects.</p>
+          </div>
+          <div class="object-grid">
+            <div><span>Evidence</span><strong id="heroEvidence">Source linked</strong></div>
+            <div><span>Confidence</span><strong id="heroConfidence">Medium-high</strong></div>
+            <div><span>Boundary</span><strong id="heroBoundary">Public posture</strong></div>
+            <div><span>Change</span><strong id="heroChange">Maintained</strong></div>
+          </div>
+        </div>
       </section>
 
-      <section class="metric-grid" id="stats"></section>
-
-      <section class="taxonomy-strip">
-        <div>
-          <span>Company master</span>
-          <strong>Canonical company identity, status, geography and value-chain role.</strong>
-        </div>
-        <div>
-          <span>Product capability</span>
-          <strong>Commercialized device, module, epiwafer or platform with source evidence.</strong>
-        </div>
-        <div>
-          <span>Annual financials</span>
-          <strong>Company-year reported facts with currency, status and original source links.</strong>
-        </div>
-        <div>
-          <span>Governance risk</span>
-          <strong>Visible uncertainty, schema drift and review queues before customer delivery.</strong>
-        </div>
+      <section class="message-band">
+        <article>
+          <span>Why it exists</span>
+          <h2 data-i18n="whyTitle">信息已经过剩，稀缺的是可靠判断。</h2>
+          <p data-i18n="whyBody">半导体公司每天面对大量 PR、财报、产品发布、供应链新闻、会议材料与行业传闻。真正的问题不是看不见信息，而是不知道哪些信号会改变判断，哪些只是噪音。</p>
+        </article>
+        <article>
+          <span>What it is</span>
+          <h2 data-i18n="whatTitle">一个持续更新的竞品路线图数据库。</h2>
+          <p data-i18n="whatBody">Tacive 不是一次性报告，也不是资讯 dashboard。每条记录都围绕一个判断对象维护：对象、信号、判断、证据、置信度、边界条件、反证信号、影响对象和更新时间。</p>
+        </article>
+        <article>
+          <span>What changes</span>
+          <h2 data-i18n="changeTitle">从碎片信号，到判断资产。</h2>
+          <p data-i18n="changeBody">持续跟踪竞品路线变化，把每个判断连接到证据与边界条件，并保存变化记录，让团队看见判断如何演化。</p>
+        </article>
       </section>
 
-      <section class="evidence-band">
-        <div>
-          <h3>Delivery posture</h3>
-          <p>This release exposes source links, locks, review flags and governance risks. Unverified items are not presented as final facts.</p>
-        </div>
-        <div class="coverage-bars" id="coverageBars"></div>
-      </section>
+      <section class="metric-grid" id="stats" aria-label="Database metrics"></section>
 
-      <section class="workspace" id="workspace">
-        <aside class="left-rail">
-          <div class="tool-panel">
-            <div class="section-title">
-              <span>Company universe</span>
-              <strong id="resultCount">0</strong>
-            </div>
-            <input id="search" type="search" placeholder="Search company, Chinese name, Canonical ID" />
-            <div class="segmented" role="group" aria-label="material filters">
+      <section id="explorer" class="explorer">
+        <aside class="scope-rail">
+          <div class="rail-block">
+            <p class="eyebrow">Database Scope</p>
+            <dl class="scope-list">
+              <div><dt>Database</dt><dd>Semiconductor Competitor Roadmap</dd></div>
+              <div><dt>Segment</dt><dd>Power Semiconductors / WBG</dd></div>
+              <div><dt>Audience</dt><dd>Strategy Leaders</dd></div>
+              <div><dt>Update model</dt><dd>Maintained from Notion sources</dd></div>
+            </dl>
+          </div>
+          <div class="rail-block">
+            <label class="field-label" for="judgmentSearch" data-i18n="searchJudgment">搜索判断对象</label>
+            <input id="judgmentSearch" type="search" placeholder="Company, signal, judgment" />
+            <label class="field-label" for="companySearch" data-i18n="searchCompany">搜索公司</label>
+            <input id="companySearch" type="search" placeholder="Company, Chinese name, Canonical ID" />
+            <div class="segmented" role="group" aria-label="Material filter">
               <button class="active" data-material="">All</button>
               <button data-material="SiC">SiC</button>
               <button data-material="GaN">GaN</button>
               <button data-material="Ga2O3">Ga2O3</button>
             </div>
             <label class="checkline">
-              <input id="withProductsOnly" type="checkbox" />
-              Companies with product capability records
+              <input id="formalOnly" type="checkbox" />
+              <span data-i18n="formalOnly">只看 Formal / 可核验对象</span>
             </label>
           </div>
-          <div class="company-list" id="companyList"></div>
+          <div class="rail-block source-block">
+            <p class="eyebrow">Active Notion Sources</p>
+            <div id="sourceList" class="source-list"></div>
+          </div>
         </aside>
 
-        <section class="main-workspace">
-          <article class="company-profile" id="companyDetail">
-            <div class="empty-state">
-              <p class="eyebrow">Select company</p>
-              <h2>Select a company to inspect its industry profile</h2>
-              <p>Company master data, productized capabilities, annual financial facts and evidence links are connected in one workspace.</p>
+        <section class="object-list-wrap">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Judgment Object List</p>
+              <h2 data-i18n="objectListTitle">被维护的判断对象</h2>
             </div>
-          </article>
+            <strong id="judgmentCount">0</strong>
+          </div>
+          <div id="judgmentList" class="judgment-list"></div>
         </section>
+
+        <aside class="detail-panel">
+          <div class="section-head compact">
+            <div>
+              <p class="eyebrow">Judgment Detail Panel</p>
+              <h2 id="detailTitle">Select a judgment</h2>
+            </div>
+            <span id="detailStatus" class="status-pill">Status</span>
+          </div>
+          <div id="judgmentDetail" class="judgment-detail"></div>
+        </aside>
       </section>
 
-      <section class="quality-section" id="quality">
-        <div class="section-heading">
-          <p class="eyebrow">Quality gate</p>
-          <h2>Known governance risks and delivery boundaries</h2>
-          <p>A paid intelligence database must surface uncertainty. Current schema/manual drift items are listed here as controlled risks.</p>
+      <section id="company360" class="company360">
+        <aside class="company-picker">
+          <div class="section-head compact">
+            <div>
+              <p class="eyebrow">Company Universe</p>
+              <h2 data-i18n="companyUniverse">公司宇宙</h2>
+            </div>
+            <strong id="companyCount">0</strong>
+          </div>
+          <label class="checkline">
+            <input id="withProductsOnly" type="checkbox" />
+            <span data-i18n="withProductsOnly">只看已有产品能力记录的公司</span>
+          </label>
+          <div id="companyList" class="company-list"></div>
+        </aside>
+        <article id="companyDetail" class="company-profile"></article>
+      </section>
+
+      <section id="governance" class="governance">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Governance</p>
+            <h2 data-i18n="governanceTitle">字段、证据、来源与交接状态</h2>
+          </div>
         </div>
-        <div id="governanceIssues" class="issue-grid"></div>
+        <div class="governance-grid">
+          <div class="governance-panel">
+            <h3 data-i18n="fieldPolicyTitle">字段治理手册编译结果</h3>
+            <div id="fieldPolicyList" class="policy-list"></div>
+          </div>
+          <div class="governance-panel">
+            <h3 data-i18n="termTitle">中英文术语系统</h3>
+            <div id="termList" class="policy-list"></div>
+          </div>
+          <div class="governance-panel">
+            <h3 data-i18n="riskTitle">已知治理风险</h3>
+            <div id="governanceIssues" class="policy-list"></div>
+          </div>
+          <div class="governance-panel">
+            <h3 data-i18n="handoffTitle">运行交接状态</h3>
+            <div id="handoffState" class="policy-list"></div>
+          </div>
+        </div>
       </section>
     </main>
 

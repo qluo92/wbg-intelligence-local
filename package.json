@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "test:ui": "playwright test tests/ui_smoke.spec.js --reporter=line"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1"
+  }
+}
