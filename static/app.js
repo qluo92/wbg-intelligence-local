@@ -205,7 +205,7 @@ function bindEvents() {
 
 async function boot() {
   try {
-    const staticResponse = await fetch("/data.json", { cache: "no-store" });
+    const staticResponse = await fetch("data.json", { cache: "no-store" });
     if (staticResponse.ok) {
       state.staticData = await staticResponse.json();
     }
