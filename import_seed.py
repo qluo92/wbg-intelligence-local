@@ -263,7 +263,7 @@ def import_all(rebuild: bool = False) -> Path:
         import_financials(conn)
         product_source = import_products(conn, name_to_id)
         import_governance(conn)
-        set_run_state(conn, "current_task", "本地化宽禁带行业数据库：公司主库 + 产品能力 + 财务事实 + 治理风险")
+        set_run_state(conn, "current_task", "Tacive WBG Intelligence: company master, product capability, financial facts and governance risk")
         set_run_state(conn, "seed_company_source", str(COMPANY_CSV.relative_to(PROJECT_ROOT)))
         set_run_state(conn, "seed_finance_source", str(FINANCIAL_CSV.relative_to(PROJECT_ROOT)))
         set_run_state(conn, "seed_product_source", product_source)

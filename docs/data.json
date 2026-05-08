@@ -45,23 +45,23 @@
     "run_state": [
       {
         "key": "current_task",
-        "value": "本地化宽禁带行业数据库：公司主库 + 产品能力 + 财务事实 + 治理风险",
-        "updated_at": "2026-05-08 14:52:46"
+        "value": "Tacive WBG Intelligence: company master, product capability, financial facts and governance risk",
+        "updated_at": "2026-05-08 15:06:54"
       },
       {
         "key": "seed_company_source",
         "value": "outputs\\notion_company_directory_audit\\company_directory_snapshot.csv",
-        "updated_at": "2026-05-08 14:52:46"
+        "updated_at": "2026-05-08 15:06:54"
       },
       {
         "key": "seed_finance_source",
         "value": "outputs\\notion_finance_audit\\annual_financials_snapshot.csv",
-        "updated_at": "2026-05-08 14:52:46"
+        "updated_at": "2026-05-08 15:06:54"
       },
       {
         "key": "seed_product_source",
         "value": "outputs\\notion_product_governance\\product_capability_publishable_release_verified_2026-05-07-12.csv",
-        "updated_at": "2026-05-08 14:52:46"
+        "updated_at": "2026-05-08 15:06:54"
       }
     ]
   },

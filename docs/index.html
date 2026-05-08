@@ -3,47 +3,104 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>WBG Intelligence Local</title>
+    <title>Tacive WBG Intelligence</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23102623'/%3E%3Ctext x='32' y='39' font-family='Arial' font-size='18' text-anchor='middle' fill='white'%3ET%3C/text%3E%3C/svg%3E" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="topbar">
-      <div>
-        <h1>WBG Intelligence</h1>
-        <p>本地宽禁带半导体产业情报数据库</p>
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-mark">Tacive</span>
+        <div>
+          <h1>Tacive WBG Intelligence</h1>
+          <p>Commercial wide-bandgap semiconductor intelligence database</p>
+        </div>
       </div>
-      <div class="status-pill" id="currentTask">Loading</div>
+      <nav class="top-nav" aria-label="primary">
+        <a href="#overview">Overview</a>
+        <a href="#workspace">Workspace</a>
+        <a href="#quality">Quality Gate</a>
+      </nav>
     </header>
 
     <main>
-      <section class="stats" id="stats"></section>
+      <section class="command-strip" id="overview">
+        <div>
+          <p class="eyebrow">Tacive industry database</p>
+          <h2>Verified company, product, financial and evidence intelligence for WBG semiconductors.</h2>
+        </div>
+        <div class="sync-state" id="currentTask">Loading data state</div>
+      </section>
 
-      <section class="layout">
-        <aside class="sidebar">
-          <div class="panel">
-            <h2>公司检索</h2>
-            <input id="search" type="search" placeholder="公司名 / 中文名 / Canonical ID" />
-            <div class="filters">
-              <button data-material="">全部</button>
+      <section class="metric-grid" id="stats"></section>
+
+      <section class="taxonomy-strip">
+        <div>
+          <span>Company master</span>
+          <strong>Canonical company identity, status, geography and value-chain role.</strong>
+        </div>
+        <div>
+          <span>Product capability</span>
+          <strong>Commercialized device, module, epiwafer or platform with source evidence.</strong>
+        </div>
+        <div>
+          <span>Annual financials</span>
+          <strong>Company-year reported facts with currency, status and original source links.</strong>
+        </div>
+        <div>
+          <span>Governance risk</span>
+          <strong>Visible uncertainty, schema drift and review queues before customer delivery.</strong>
+        </div>
+      </section>
+
+      <section class="evidence-band">
+        <div>
+          <h3>Delivery posture</h3>
+          <p>This release exposes source links, locks, review flags and governance risks. Unverified items are not presented as final facts.</p>
+        </div>
+        <div class="coverage-bars" id="coverageBars"></div>
+      </section>
+
+      <section class="workspace" id="workspace">
+        <aside class="left-rail">
+          <div class="tool-panel">
+            <div class="section-title">
+              <span>Company universe</span>
+              <strong id="resultCount">0</strong>
+            </div>
+            <input id="search" type="search" placeholder="Search company, Chinese name, Canonical ID" />
+            <div class="segmented" role="group" aria-label="material filters">
+              <button class="active" data-material="">All</button>
               <button data-material="SiC">SiC</button>
               <button data-material="GaN">GaN</button>
               <button data-material="Ga2O3">Ga2O3</button>
             </div>
+            <label class="checkline">
+              <input id="withProductsOnly" type="checkbox" />
+              Companies with product capability records
+            </label>
           </div>
           <div class="company-list" id="companyList"></div>
         </aside>
 
-        <section class="content">
-          <article class="panel" id="companyDetail">
-            <h2>选择一家公司</h2>
-            <p class="muted">左侧检索公司后，这里会显示公司主数据、产品化能力和财务事实。</p>
-          </article>
-
-          <article class="panel">
-            <h2>治理风险</h2>
-            <div id="governanceIssues"></div>
+        <section class="main-workspace">
+          <article class="company-profile" id="companyDetail">
+            <div class="empty-state">
+              <p class="eyebrow">Select company</p>
+              <h2>Select a company to inspect its industry profile</h2>
+              <p>Company master data, productized capabilities, annual financial facts and evidence links are connected in one workspace.</p>
+            </div>
           </article>
         </section>
+      </section>
+
+      <section class="quality-section" id="quality">
+        <div class="section-heading">
+          <p class="eyebrow">Quality gate</p>
+          <h2>Known governance risks and delivery boundaries</h2>
+          <p>A paid intelligence database must surface uncertainty. Current schema/manual drift items are listed here as controlled risks.</p>
+        </div>
+        <div id="governanceIssues" class="issue-grid"></div>
       </section>
     </main>
 

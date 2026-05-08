@@ -1,121 +1,186 @@
 const state = {
   material: "",
   selected: "",
+  withProductsOnly: false,
   staticData: null,
 };
 
-const el = (id) => document.getElementById(id);
+const $ = (id) => document.getElementById(id);
 
-async function getJson(url) {
-  if (state.staticData) {
-    if (url === "/api/overview") return state.staticData.overview;
-    if (url === "/api/governance") return { items: state.staticData.governance };
-    if (url.startsWith("/api/companies")) return filterStaticCompanies(url);
-    if (url.startsWith("/api/company/")) {
-      const id = decodeURIComponent(url.replace("/api/company/", ""));
-      return state.staticData.companyDetails[id];
-    }
-  }
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`Request failed: ${url}`);
-  return response.json();
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
-function filterStaticCompanies(url) {
-  const parsed = new URL(url, window.location.origin);
-  const search = (parsed.searchParams.get("search") || "").toLowerCase();
-  const material = parsed.searchParams.get("material") || "";
-  const items = state.staticData.companies.filter((item) => {
-    const matchesSearch =
-      !search ||
-      `${item.name || ""} ${item.chinese_name || ""} ${item.canonical_id || ""}`.toLowerCase().includes(search);
-    const matchesMaterial = !material || String(item.product_categories || "").includes(material);
-    return matchesSearch && matchesMaterial;
-  });
-  return { items };
-}
-
-function tagList(value) {
-  if (!value) return "";
+function splitValues(value) {
+  if (!value) return [];
   return String(value)
+    .replaceAll("，", ",")
     .split(",")
     .map((item) => item.trim())
-    .filter(Boolean)
-    .slice(0, 5)
-    .map((item) => `<span class="tag">${item}</span>`)
+    .filter(Boolean);
+}
+
+function tagList(value, className = "") {
+  return splitValues(value)
+    .slice(0, 6)
+    .map((item) => `<span class="tag ${className}">${escapeHtml(item)}</span>`)
     .join("");
 }
 
-function yesNoTag(value, label) {
-  return value ? `<span class="tag red">${label}</span>` : "";
+function sourceLink(url, label = "Source") {
+  if (!url) return "";
+  return `<a class="source-link" href="${escapeHtml(url)}" target="_blank" rel="noreferrer">${escapeHtml(label)}</a>`;
 }
 
-async function loadOverview() {
-  const data = await getJson("/api/overview");
-  const labels = {
-    companies: "公司",
-    products: "产品化能力",
-    financial_rows: "财务行",
-    governance_issues: "治理风险",
-    locked_companies: "锁定公司",
-    review_companies: "待审核公司",
-  };
-  el("stats").innerHTML = Object.entries(labels)
-    .map(([key, label]) => `<div class="stat"><strong>${data.stats[key] ?? 0}</strong><span>${label}</span></div>`)
-    .join("");
-  const current = data.run_state.find((item) => item.key === "current_task");
-  el("currentTask").textContent = current ? current.value : "本地行业数据库";
+function formatNumber(value) {
+  if (value === null || value === undefined || value === "") return "";
+  const number = Number(value);
+  if (Number.isNaN(number)) return escapeHtml(value);
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(number);
 }
 
-async function loadCompanies() {
-  const search = encodeURIComponent(el("search").value.trim());
-  const material = encodeURIComponent(state.material);
-  const data = await getJson(`/api/companies?search=${search}&material=${material}`);
-  el("companyList").innerHTML = data.items
-    .map(
-      (item) => `
-      <button class="company-card" data-id="${item.canonical_id}">
-        <strong>${item.name}</strong>
-        <span>${item.chinese_name || item.canonical_id}</span>
-        <span>${item.headquarters || "总部未填"} · ${item.company_status || "状态未填"}</span>
-        <div class="tags">
-          ${tagList(item.product_categories)}
-          ${yesNoTag(item.review_flag, "待审核")}
-          ${item.lock_flag ? '<span class="tag green">锁定</span>' : ""}
-        </div>
-      </button>
-    `,
-    )
+async function loadStaticData() {
+  const response = await fetch("data.json", { cache: "no-store" });
+  if (!response.ok) throw new Error("Unable to load data.json");
+  state.staticData = await response.json();
+}
+
+function allCompanies() {
+  return state.staticData?.companies || [];
+}
+
+function allDetails() {
+  return state.staticData?.companyDetails || {};
+}
+
+function detailFor(companyId) {
+  return allDetails()[companyId] || null;
+}
+
+function filteredCompanies() {
+  const search = $("search").value.trim().toLowerCase();
+  return allCompanies().filter((company) => {
+    const blob = `${company.name || ""} ${company.chinese_name || ""} ${company.canonical_id || ""}`.toLowerCase();
+    const matchesSearch = !search || blob.includes(search);
+    const matchesMaterial = !state.material || String(company.product_categories || "").includes(state.material);
+    const detail = detailFor(company.canonical_id);
+    const matchesProducts = !state.withProductsOnly || (detail?.products || []).length > 0;
+    return matchesSearch && matchesMaterial && matchesProducts;
+  });
+}
+
+function companyCoverage() {
+  const companies = allCompanies();
+  const details = allDetails();
+  const total = companies.length || 1;
+  const withProducts = companies.filter((item) => (details[item.canonical_id]?.products || []).length > 0).length;
+  const withFinancials = companies.filter((item) => (details[item.canonical_id]?.financials || []).length > 0).length;
+  const locked = companies.filter((item) => item.lock_flag).length;
+  const review = companies.filter((item) => item.review_flag).length;
+  return [
+    ["Product capability coverage", withProducts, total],
+    ["Annual financial coverage", withFinancials, total],
+    ["Human-confirmed lock coverage", locked, total],
+    ["Review queue share", review, total],
+  ];
+}
+
+function renderOverview() {
+  const overview = state.staticData.overview;
+  const stats = overview.stats;
+  const metrics = [
+    ["Company master", stats.companies, "Canonical ID anchored"],
+    ["Product capabilities", stats.products, "Source and evidence linked"],
+    ["Annual financial rows", stats.financial_rows, "Company-year facts"],
+    ["Governance risks", stats.governance_issues, "Schema/manual drift"],
+    ["Locked companies", stats.locked_companies, "Human-confirmed rows"],
+    ["Review companies", stats.review_companies, "Human decision needed"],
+  ];
+  $("stats").innerHTML = metrics
+    .map(([label, value, note]) => `<div class="metric"><strong>${value}</strong><span>${label}<br>${note}</span></div>`)
     .join("");
+
+  const current = overview.run_state.find((item) => item.key === "current_task");
+  $("currentTask").textContent = current?.value || "Tacive WBG Intelligence database";
+
+  $("coverageBars").innerHTML = companyCoverage()
+    .map(([label, value, total]) => {
+      const pct = Math.round((value / total) * 100);
+      return `
+        <div class="coverage-row">
+          <span>${label}</span>
+          <div class="bar"><span style="width:${pct}%"></span></div>
+          <strong>${pct}%</strong>
+        </div>`;
+    })
+    .join("");
+}
+
+function renderCompanies() {
+  const items = filteredCompanies();
+  $("resultCount").textContent = items.length;
+  $("companyList").innerHTML = items
+    .map((company) => {
+      const detail = detailFor(company.canonical_id);
+      const productCount = detail?.products?.length || 0;
+      const financialCount = detail?.financials?.length || 0;
+      const selected = state.selected === company.canonical_id ? "selected" : "";
+      return `
+        <button class="company-card ${selected}" data-id="${escapeHtml(company.canonical_id)}">
+          <strong>${escapeHtml(company.name)}</strong>
+          <span>${escapeHtml(company.chinese_name || company.canonical_id)}</span>
+          <span>${escapeHtml(company.headquarters || "HQ missing")} · ${escapeHtml(company.company_status || "Status missing")}</span>
+          <div class="tag-row">
+            ${tagList(company.product_categories)}
+            ${productCount ? `<span class="tag ok">Products ${productCount}</span>` : ""}
+            ${financialCount ? `<span class="tag ok">Financials ${financialCount}</span>` : ""}
+            ${company.review_flag ? '<span class="tag danger">Review</span>' : ""}
+          </div>
+        </button>`;
+    })
+    .join("");
+
   document.querySelectorAll(".company-card").forEach((button) => {
-    button.addEventListener("click", () => loadCompany(button.dataset.id));
+    button.addEventListener("click", () => renderCompanyDetail(button.dataset.id));
   });
 }
 
 function renderFinancials(rows) {
-  if (!rows.length) return '<p class="muted">暂无财务行。</p>';
+  if (!rows.length) return '<p class="evidence-text">No annual financial data yet.</p>';
   return `
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>财年</th><th>营收</th><th>净利润</th><th>EBIT</th><th>FCF</th><th>货币</th><th>状态</th>
+            <th>Fiscal year</th>
+            <th>Revenue</th>
+            <th>Net income</th>
+            <th>EBIT</th>
+            <th>FCF</th>
+            <th>Currency</th>
+            <th>Status</th>
+            <th>Source</th>
           </tr>
         </thead>
         <tbody>
           ${rows
             .map(
               (row) => `
-              <tr>
-                <td>${row.fiscal_year || ""}</td>
-                <td>${row.revenue ?? ""}</td>
-                <td>${row.net_profit ?? ""}</td>
-                <td>${row.ebit ?? ""}</td>
-                <td>${row.fcf ?? ""}</td>
-                <td>${row.currency || ""}</td>
-                <td>${row.collection_status || ""}</td>
-              </tr>
-            `,
+                <tr>
+                  <td>${escapeHtml(row.fiscal_year || "")}</td>
+                  <td>${formatNumber(row.revenue)}</td>
+                  <td>${formatNumber(row.net_profit)}</td>
+                  <td>${formatNumber(row.ebit)}</td>
+                  <td>${formatNumber(row.fcf)}</td>
+                  <td>${escapeHtml(row.currency || "")}</td>
+                  <td>${escapeHtml(row.collection_status || "")}</td>
+                  <td>${sourceLink(row.source_url, row.source_type || "Source")}</td>
+                </tr>`,
             )
             .join("")}
         </tbody>
@@ -124,100 +189,129 @@ function renderFinancials(rows) {
 }
 
 function renderProducts(rows) {
-  if (!rows.length) return '<p class="muted">暂无产品化能力。</p>';
-  return rows
-    .map(
-      (row) => `
-      <div class="fact">
-        <strong>${row.capability_name}</strong>
-        <div class="tags">
-          ${tagList(row.material_system)}
-          ${tagList(row.device_category)}
-          ${tagList(row.voltage)}
-          ${row.ingest_status ? `<span class="tag green">${row.ingest_status}</span>` : ""}
-        </div>
-        <p class="muted">${row.source_type || ""}${row.last_verified ? ` · ${row.last_verified}` : ""}</p>
-      </div>
-    `,
-    )
-    .join("");
+  if (!rows.length) return '<p class="evidence-text">No product capability record yet.</p>';
+  return `
+    <div class="product-list">
+      ${rows
+        .map(
+          (row) => `
+            <div class="product-row">
+              <strong>${escapeHtml(row.capability_name)}</strong>
+              <div class="tag-row">
+                ${tagList(row.material_system)}
+                ${tagList(row.device_category)}
+                ${tagList(row.technology_tags)}
+                ${tagList(row.voltage, "ok")}
+                ${row.ingest_status ? `<span class="tag ok">${escapeHtml(row.ingest_status)}</span>` : ""}
+              </div>
+              <p class="evidence-text">${escapeHtml(row.evidence_excerpt || "No evidence excerpt captured yet.")}</p>
+              ${sourceLink(row.source_url, `${row.source_type || "Source"} · ${row.last_verified || "No verification date"}`)}
+            </div>`,
+        )
+        .join("")}
+    </div>`;
 }
 
-async function loadCompany(canonicalId) {
+function renderCompanyDetail(canonicalId) {
   state.selected = canonicalId;
-  const data = await getJson(`/api/company/${encodeURIComponent(canonicalId)}`);
-  const company = data.company;
-  el("companyDetail").innerHTML = `
-    <h2>${company.name}</h2>
-    <p class="muted">${company.chinese_name || company.canonical_id}</p>
-    <div class="tags">
-      ${tagList(company.product_categories)}
-      ${tagList(company.value_chain_roles)}
-      ${yesNoTag(company.review_flag, "待审核")}
-      ${company.lock_flag ? '<span class="tag green">人工确认锁</span>' : ""}
+  const payload = detailFor(canonicalId);
+  if (!payload) return;
+  const company = payload.company;
+  const products = payload.products || [];
+  const financials = payload.financials || [];
+  const facts = [
+    ["Headquarters", company.headquarters],
+    ["Founded", company.founded_year],
+    ["Employee band", company.employee_band],
+    ["Company status", company.company_status],
+    ["Company type", company.company_type],
+    ["Collection status", company.collection_status],
+    ["Last collected", company.last_collected],
+    ["Website", company.website ? sourceLink(company.website, "Website") : ""],
+  ];
+
+  $("companyDetail").innerHTML = `
+    <div class="profile-head">
+      <div>
+        <p class="eyebrow">Company profile</p>
+        <h2>${escapeHtml(company.name)}</h2>
+        <p class="canonical">${escapeHtml(company.chinese_name || "")} · ${escapeHtml(company.canonical_id)}</p>
+        <p class="profile-note">${escapeHtml(company.positioning || "No positioning statement captured yet.")}</p>
+        <div class="tag-row">
+          ${tagList(company.product_categories)}
+          ${tagList(company.value_chain_roles)}
+          ${tagList(company.technology_routes)}
+          ${company.lock_flag ? '<span class="tag ok">Human-confirmed lock</span>' : ""}
+          ${company.review_flag ? '<span class="tag danger">Needs review</span>' : ""}
+        </div>
+      </div>
+      <div class="profile-score">
+        <div class="score-line"><span>Product capabilities</span><strong>${products.length}</strong></div>
+        <div class="score-line"><span>Annual financial rows</span><strong>${financials.length}</strong></div>
+        <div class="score-line"><span>Source links</span><strong>${products.filter((p) => p.source_url).length + financials.filter((f) => f.source_url).length}</strong></div>
+        <div class="score-line"><span>Data posture</span><strong>${company.review_flag ? "Review" : "Usable"}</strong></div>
+      </div>
     </div>
-    <div class="grid-two" style="margin-top: 14px;">
-      <div class="fact"><span>总部</span>${company.headquarters || ""}</div>
-      <div class="fact"><span>成立年份</span>${company.founded_year || ""}</div>
-      <div class="fact"><span>公司状态</span>${company.company_status || ""}</div>
-      <div class="fact"><span>采集状态</span>${company.collection_status || ""}</div>
+
+    <div class="profile-grid">
+      ${facts.map(([label, value]) => `<div class="fact"><span>${label}</span>${value || "Missing"}</div>`).join("")}
     </div>
-    <div class="fact" style="margin-top: 12px;">
-      <span>一句话定位</span>
-      ${company.positioning || "未填"}
-    </div>
-    <h3 style="margin-top: 18px;">产品化能力</h3>
-    ${renderProducts(data.products)}
-    <h3 style="margin-top: 18px;">年度财务</h3>
-    ${renderFinancials(data.financials)}
+
+    <section class="detail-section">
+      <h3>Productized capabilities <span>Products, platforms, device capabilities and evidence</span></h3>
+      ${renderProducts(products)}
+    </section>
+
+    <section class="detail-section">
+      <h3>Annual financials <span>Reported facts, source-linked when available</span></h3>
+      ${renderFinancials(financials)}
+    </section>
   `;
+  renderCompanies();
 }
 
-async function loadGovernance() {
-  const data = await getJson("/api/governance");
-  el("governanceIssues").innerHTML = data.items
+function renderGovernance() {
+  $("governanceIssues").innerHTML = (state.staticData.governance || [])
     .map(
       (item) => `
-      <div class="issue">
-        <strong>${item.scope} · ${item.field}</strong>
-        <p>${item.issue}</p>
-        <p class="muted">${item.recommended_action}</p>
-      </div>
-    `,
+        <div class="issue">
+          <strong>${escapeHtml(item.scope)} · ${escapeHtml(item.field)}</strong>
+          <p>${escapeHtml(item.issue)}</p>
+          <p>${escapeHtml(item.recommended_action)}</p>
+        </div>`,
     )
     .join("");
 }
 
 function bindEvents() {
-  el("search").addEventListener("input", () => {
-    window.clearTimeout(window.__searchTimer);
-    window.__searchTimer = window.setTimeout(loadCompanies, 160);
+  $("search").addEventListener("input", () => {
+    window.clearTimeout(window.searchTimer);
+    window.searchTimer = window.setTimeout(renderCompanies, 120);
+  });
+  $("withProductsOnly").addEventListener("change", (event) => {
+    state.withProductsOnly = event.target.checked;
+    renderCompanies();
   });
   document.querySelectorAll("[data-material]").forEach((button) => {
     button.addEventListener("click", () => {
       state.material = button.dataset.material;
       document.querySelectorAll("[data-material]").forEach((item) => item.classList.remove("active"));
       button.classList.add("active");
-      loadCompanies();
+      renderCompanies();
     });
   });
 }
 
 async function boot() {
-  try {
-    const staticResponse = await fetch("data.json", { cache: "no-store" });
-    if (staticResponse.ok) {
-      state.staticData = await staticResponse.json();
-    }
-  } catch (_) {
-    state.staticData = null;
-  }
+  await loadStaticData();
   bindEvents();
-  await loadOverview();
-  await loadCompanies();
-  await loadGovernance();
+  renderOverview();
+  renderCompanies();
+  renderGovernance();
+  const firstCompany = filteredCompanies()[0];
+  if (firstCompany) renderCompanyDetail(firstCompany.canonical_id);
 }
 
 boot().catch((error) => {
-  document.body.innerHTML = `<pre>${error.stack}</pre>`;
+  document.body.innerHTML = `<pre>${escapeHtml(error.stack || error.message)}</pre>`;
 });
